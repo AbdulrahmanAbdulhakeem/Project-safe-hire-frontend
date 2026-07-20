@@ -22,11 +22,9 @@ export default function Home() {
   const {
     jobs,
     verification,
-    // selectedCompany,
     loading,
     fetchJobs,
     verifyCompany,
-    getCompanyById,
   } = usePublicStore();
 
   const [cacRc, setCacRc] = useState("");
