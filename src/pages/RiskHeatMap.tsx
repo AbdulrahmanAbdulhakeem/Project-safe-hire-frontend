@@ -16,7 +16,7 @@ export default function RiskHeatmap() {
   const { heatmapData, fetchHeatmapData } = usePublicStore();
   const [selectedPoint, setSelectedPoint] = useState<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [mapLoaded, setMapLoaded] = useState(false);
+  const [_mapLoaded, setMapLoaded] = useState(false);
 
   useEffect(() => {
     fetchHeatmapData();

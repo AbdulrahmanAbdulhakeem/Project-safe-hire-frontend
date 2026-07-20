@@ -30,7 +30,7 @@ export default function Home() {
   } = usePublicStore();
 
   const [cacRc, setCacRc] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, _setSearchTerm] = useState("");
   const [jobModal, setJobModal] = useState<any>(null);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [showCompanyModal, setShowCompanyModal] = useState(false);
@@ -55,10 +55,10 @@ export default function Home() {
 
   const openJobModal = (job: any) => setJobModal(job);
 
-  const openCompanyProfile = (companyId: string) => {
-    getCompanyById(companyId);
-    setShowCompanyModal(true);
-  };
+  // const openCompanyProfile = (companyId: string) => {
+  //   getCompanyById(companyId);
+  //   setShowCompanyModal(true);
+  // };
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

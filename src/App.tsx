@@ -5,8 +5,6 @@ import Login from './pages/Login';
 import CompanyDashboard from './pages/company/Dashboard';
 import AdminDashboard from './pages/admin/Dashboard';
 import PostJob from './pages/company/PostJob';
-// import MyJobs from './pages/company/MyJobsTable';
-// import JobDetail from './pages/JobDetail';
 import Home from './pages/Home';
 
 // Protected Route Component
