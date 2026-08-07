@@ -61,21 +61,32 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   },
 
   onboardCompany: async (data) => {
-    const payload = {
-      email: data.email,
-      password: data.password,
-      name: data.name,
-      cacRc: data.cacRc.replace(/\s+/g, "").toUpperCase(),
-      address: data.address || "",
-    };
+  const payload = {
+    email: data.email,
+    password: data.password,
+    name: data.name,
+    cacRc: data.cacRc.replace(/\s+/g, '').toUpperCase(),
+    address: data.address || '',
+  };
 
-    const res = await api.post("/api/admin/companies/onboard", payload);
+  const res = await api.post('/api/admin/companies/onboard', payload);
 
-    // Immediately add to list
-    set((state) => ({
-      companies: [res.data, ...state.companies],
-    }));
-  },
+  set((state) => ({
+    companies: [
+      {
+        id: res.data.companyId,
+        userId: res.data.userId,
+        name: data.name,
+        cacRc: payload.cacRc,
+        address: data.address || null,
+        status: 'APPROVED',
+        isVerified: true,
+        createdAt: new Date().toISOString(),
+      },
+      ...state.companies,
+    ],
+  }));
+},
 
   updateCompany: async (id, data) => {
     await api.put(`/api/admin/companies/${id}`, data);
@@ -92,3 +103,21 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     }
   },
 }));
+
+
+
+// Alternative: Just refetch for the state update
+// onboardCompany: async (data) => {
+//   const payload = {
+//     email: data.email,
+//     password: data.password,
+//     name: data.name,
+//     cacRc: data.cacRc.replace(/\s+/g, '').toUpperCase(),
+//     address: data.address || '',
+//   };
+
+//   await api.post('/api/admin/companies/onboard', payload);
+
+//   // Reload full list so the row has real fields
+//   await get().fetchAllCompanies();
+// },

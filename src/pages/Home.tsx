@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import PublicHeader from "../components/PublicHeader";
 import { usePublicStore } from "../store/publicStore";
 import RiskHeatmap from "./RiskHeatMap";
+import api from "@/api/axios";
 
 export default function Home() {
   const {
@@ -54,28 +55,21 @@ export default function Home() {
   const openJobModal = (job: any) => setJobModal(job);
 
   const handleContactSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSending(true);
+  e.preventDefault();
+  setSending(true);
 
-    try {
-      const response = await fetch("http://localhost:8000/api/public/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(contactForm),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) throw new Error(result.error || "Failed to send");
-
-      toast.success("Message sent successfully!");
-      setContactForm({ name: "", email: "", subject: "", message: "" });
-    } catch (error: any) {
-      toast.error(error.message || "Failed to send message");
-    } finally {
-      setSending(false);
-    }
-  };
+  try {
+    await api.post('/api/public/contact', contactForm);
+    toast.success('Message sent successfully!');
+    setContactForm({ name: '', email: '', subject: '', message: '' });
+  } catch (error: any) {
+    toast.error(
+      error.response?.data?.error || error.message || 'Failed to send message'
+    );
+  } finally {
+    setSending(false);
+  }
+};
 
   const filteredJobs = jobs.filter(
     (job) =>
