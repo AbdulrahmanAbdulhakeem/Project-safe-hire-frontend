@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router';
+import {useNavigate } from 'react-router';
 import { useAuthStore } from '../store/authStore';
 import { Button } from '@/components/ui/button';
 import { ShieldCheck, LogOut, LayoutDashboard } from 'lucide-react';
