@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { create } from 'zustand';
-import api from '../api/axios';
+import { create } from "zustand";
+import api from "../api/axios";
 
 type AdminStore = {
   companies: any[];
@@ -19,13 +19,25 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   stats: null,
   loading: false,
 
+
   fetchAllCompanies: async () => {
     set({ loading: true });
     try {
-      const res = await api.get('/api/admin/companies');
+      const res = await api.get("/api/admin/companies");
       set({ companies: res.data.data || res.data });
-    } catch (err) {
-      console.error('Failed to fetch companies:', err);
+    } catch (err: any) {
+      // one retry after cold start
+      if (err?.response?.status === 404 || !err?.response) {
+        await new Promise((r) => setTimeout(r, 2000));
+        try {
+          const res = await api.get("/api/admin/companies");
+          set({ companies: res.data.data || res.data });
+          return;
+        } catch (e) {
+          console.error("Failed to fetch companies:", e);
+        }
+      }
+      console.error("Failed to fetch companies:", err);
     } finally {
       set({ loading: false });
     }
@@ -33,11 +45,18 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
 
   fetchStats: async () => {
     try {
-      const res = await api.get('/api/admin/stats');
+      const res = await api.get("/api/admin/stats");
       set({ stats: res.data.data });
     } catch (err) {
-      console.error('Failed to fetch stats:', err);
-      set({ stats: { totalCompanies: 0, totalJobs: 0, totalAdmins: 1, pendingCompanies: 0 } });
+      console.error("Failed to fetch stats:", err);
+      set({
+        stats: {
+          totalCompanies: 0,
+          totalJobs: 0,
+          totalAdmins: 1,
+          pendingCompanies: 0,
+        },
+      });
     }
   },
 
@@ -46,15 +65,15 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
       email: data.email,
       password: data.password,
       name: data.name,
-      cacRc: data.cacRc.replace(/\s+/g, '').toUpperCase(),
+      cacRc: data.cacRc.replace(/\s+/g, "").toUpperCase(),
       address: data.address || "",
     };
 
-    const res = await api.post('/api/admin/companies/onboard', payload);
-    
+    const res = await api.post("/api/admin/companies/onboard", payload);
+
     // Immediately add to list
     set((state) => ({
-      companies: [res.data, ...state.companies]
+      companies: [res.data, ...state.companies],
     }));
   },
 
