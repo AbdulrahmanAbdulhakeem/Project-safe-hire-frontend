@@ -35,7 +35,9 @@ export default function CompaniesTable({ companies }: { companies: any[] }) {
     toast.success('Company deleted');
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
-    toast.error('Failed to delete');
+    // Still refresh in case it worked server-side
+    await useAdminStore.getState().fetchAllCompanies();
+    toast.error('Delete may have failed — list refreshed');
   } finally {
     setDeletingId(null);
   }

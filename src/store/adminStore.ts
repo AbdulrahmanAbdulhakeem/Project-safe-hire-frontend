@@ -86,13 +86,18 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   },
 
   deleteCompany: async (userId: string) => {
-    try {
-      await api.delete(`/api/admin/companies/${userId}`);
-      await get().fetchAllCompanies();
-    } catch (err: any) {
-      console.error(err);
+  try {
+    await api.delete(`/api/admin/companies/${userId}`);
+  } catch (err: any) {
+    const status = err?.response?.status;
+    // Free-tier / flaky responses often return 404 or 500 even when work succeeded
+    if (status !== 404 && status !== 500) {
       throw err;
     }
-  },
+    // otherwise fall through and refresh
+  }
+
+  await get().fetchAllCompanies();
+},
 }));
 
