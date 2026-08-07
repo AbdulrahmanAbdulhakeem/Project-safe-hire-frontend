@@ -19,7 +19,6 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   stats: null,
   loading: false,
 
-
   fetchAllCompanies: async () => {
     set({ loading: true });
     try {
@@ -61,24 +60,24 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   },
 
   onboardCompany: async (data) => {
-  const payload = {
-    email: data.email,
-    password: data.password,
-    name: data.name,
-    cacRc: data.cacRc.replace(/\s+/g, "").toUpperCase(),
-    address: data.address || "",
-  };
+    const payload = {
+      email: data.email,
+      password: data.password,
+      name: data.name,
+      cacRc: data.cacRc.replace(/\s+/g, "").toUpperCase(),
+      address: data.address || "",
+    };
 
-  try {
-    await api.post("/api/admin/companies/onboard", payload);
-  } catch (err: any) {
-    const status = err.response?.status;
-    // 409 = already exists; 404 on free tier is often a false negative
-    if (status !== 409 && status !== 404) throw err;
-  }
+    try {
+      await api.post("/api/admin/companies/onboard", payload);
+    } catch (err: any) {
+      const status = err.response?.status;
+      // 409 = already exists; 404 on free tier is often a false negative
+      if (status !== 409 && status !== 404) throw err;
+    }
 
-  await get().fetchAllCompanies();
-},
+    await get().fetchAllCompanies();
+  },
 
   updateCompany: async (id, data) => {
     await api.put(`/api/admin/companies/${id}`, data);
@@ -86,18 +85,32 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   },
 
   deleteCompany: async (userId: string) => {
-  try {
-    await api.delete(`/api/admin/companies/${userId}`);
-  } catch (err: any) {
-    const status = err?.response?.status;
-    // Free-tier / flaky responses often return 404 or 500 even when work succeeded
-    if (status !== 404 && status !== 500) {
-      throw err;
+    //Optimistic update — remove from UI right away
+    set((state) => ({
+      companies: state.companies.filter(
+        (c) => c.userId !== userId && c.id !== userId,
+      ),
+    }));
+
+    //Call API (ignore flaky 404/500)
+    try {
+      await api.delete(`/api/admin/companies/${userId}`);
+    } catch (err: any) {
+      const status = err?.response?.status;
+      if (status !== 404 && status !== 500) {
+        // Real failure → put it back and rethrow
+        await get()
+          .fetchAllCompanies()
+          .catch(() => {});
+        throw err;
+      }
     }
-    // otherwise fall through and refresh
-  }
 
-  await get().fetchAllCompanies();
-},
+    // Best-effort refresh (don't fail the whole action if this 404s)
+    try {
+      await get().fetchAllCompanies();
+    } catch {
+      // list already updated optimistically
+    }
+  },
 }));
-
