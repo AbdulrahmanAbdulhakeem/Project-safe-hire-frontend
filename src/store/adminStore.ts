@@ -20,27 +20,26 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   loading: false,
 
   fetchAllCompanies: async () => {
-    set({ loading: true });
-    try {
-      const res = await api.get("/api/admin/companies");
-      set({ companies: res.data.data || res.data });
-    } catch (err: any) {
-      // one retry after cold start
-      if (err?.response?.status === 404 || !err?.response) {
-        await new Promise((r) => setTimeout(r, 2000));
-        try {
-          const res = await api.get("/api/admin/companies");
-          set({ companies: res.data.data || res.data });
-          return;
-        } catch (e) {
-          console.error("Failed to fetch companies:", e);
-        }
+  set({ loading: true });
+  try {
+    const res = await api.get('/api/admin/companies');
+    set({ companies: res.data.data || res.data });
+  } catch (err: any) {
+    if (err?.response?.status === 404 || !err?.response) {
+      await new Promise((r) => setTimeout(r, 1500));
+      try {
+        const res = await api.get('/api/admin/companies');
+        set({ companies: res.data.data || res.data });
+        return;
+      } catch {
+        // do NOT clear companies — keep whatever is already in state
       }
-      console.error("Failed to fetch companies:", err);
-    } finally {
-      set({ loading: false });
     }
-  },
+    console.error('Failed to fetch companies:', err);
+  } finally {
+    set({ loading: false });
+  }
+},
 
   fetchStats: async () => {
     try {
@@ -64,19 +63,49 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
       email: data.email,
       password: data.password,
       name: data.name,
-      cacRc: data.cacRc.replace(/\s+/g, "").toUpperCase(),
+      cacRc: String(data.cacRc).replace(/\s+/g, "").toUpperCase(),
       address: data.address || "",
     };
 
+    // 1. Call API
+    let res: any = null;
     try {
-      await api.post("/api/admin/companies/onboard", payload);
+      res = await api.post("/api/admin/companies/onboard", payload);
     } catch (err: any) {
-      const status = err.response?.status;
-      // 409 = already exists; 404 on free tier is often a false negative
-      if (status !== 409 && status !== 404) throw err;
+      const status = err?.response?.status;
+      // 409 = already exists; 404 often false negative on free tier
+      if (status !== 409 && status !== 404) {
+        throw err;
+      }
     }
 
-    await get().fetchAllCompanies();
+    //Optimistic row so UI updates even if refetch 404s
+    const optimistic = {
+      id: res?.data?.companyId || `temp-${Date.now()}`,
+      userId: res?.data?.userId || null,
+      name: payload.name,
+      cacRc: payload.cacRc,
+      address: payload.address || null,
+      status: "APPROVED",
+      isVerified: true,
+      createdAt: new Date().toISOString(),
+    };
+
+    set((state) => {
+      // avoid duplicate if already in list (e.g. 409)
+      const exists = state.companies.some(
+        (c) => c.cacRc === payload.cacRc || c.id === optimistic.id,
+      );
+      if (exists) return state;
+      return { companies: [optimistic, ...state.companies] };
+    });
+
+    //Best-effort refetch (ignore failure)
+    try {
+      await get().fetchAllCompanies();
+    } catch {
+      // keep optimistic row
+    }
   },
 
   updateCompany: async (id, data) => {
