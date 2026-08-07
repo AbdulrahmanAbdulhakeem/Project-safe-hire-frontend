@@ -1,10 +1,17 @@
 import { Link } from 'react-router';
 import { useAuthStore } from '../store/authStore';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, LogOut } from 'lucide-react';
+import { ShieldCheck, LogOut, LayoutDashboard } from 'lucide-react';
 
 export default function PublicHeader() {
   const { user, isAuthenticated, logout } = useAuthStore();
+
+  const dashboardPath =
+    user?.role === 'ADMIN'
+      ? '/dashboard/admin'
+      : user?.role === 'COMPANY'
+        ? '/dashboard/company'
+        : '/';
 
   return (
     <header className="bg-white border-b sticky top-0 z-50 shadow-sm">
@@ -25,13 +32,21 @@ export default function PublicHeader() {
               <span className="text-sm text-gray-600">
                 Hi, <span className="font-medium text-gray-900">{user?.name}</span>
               </span>
+
+              <Button variant="outline" size="sm" asChild>
+                <Link to={dashboardPath}>
+                  <LayoutDashboard className="h-4 w-4 mr-2" />
+                  {user?.role === 'ADMIN' ? 'Admin Dashboard' : 'Company Dashboard'}
+                </Link>
+              </Button>
+
               <Button variant="ghost" size="sm" onClick={logout}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
               </Button>
             </div>
           ) : (
-            <Button>
+            <Button asChild>
               <Link to="/login">Login as Company/Admin</Link>
             </Button>
           )}
