@@ -1,10 +1,11 @@
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { useAuthStore } from '../store/authStore';
 import { Button } from '@/components/ui/button';
 import { ShieldCheck, LogOut, LayoutDashboard } from 'lucide-react';
 
 export default function PublicHeader() {
   const { user, isAuthenticated, logout } = useAuthStore();
+  const navigate = useNavigate();
 
   const dashboardPath =
     user?.role === 'ADMIN'
@@ -12,6 +13,11 @@ export default function PublicHeader() {
       : user?.role === 'COMPANY'
         ? '/dashboard/company'
         : '/';
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
 
   return (
     <header className="bg-white border-b sticky top-0 z-50 shadow-sm">
@@ -33,21 +39,23 @@ export default function PublicHeader() {
                 Hi, <span className="font-medium text-gray-900">{user?.name}</span>
               </span>
 
-              <Button variant="outline" size="sm" asChild>
-                <Link to={dashboardPath}>
-                  <LayoutDashboard className="h-4 w-4 mr-2" />
-                  {user?.role === 'ADMIN' ? 'Admin Dashboard' : 'Company Dashboard'}
-                </Link>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(dashboardPath)}
+              >
+                <LayoutDashboard className="h-4 w-4 mr-2" />
+                {user?.role === 'ADMIN' ? 'Admin Dashboard' : 'Company Dashboard'}
               </Button>
 
-              <Button variant="ghost" size="sm" onClick={logout}>
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
               </Button>
             </div>
           ) : (
-            <Button asChild>
-              <Link to="/login">Login as Company/Admin</Link>
+            <Button onClick={() => navigate('/login')}>
+              Login as Company/Admin
             </Button>
           )}
         </div>
