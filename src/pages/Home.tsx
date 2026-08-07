@@ -53,11 +53,6 @@ export default function Home() {
 
   const openJobModal = (job: any) => setJobModal(job);
 
-  // const openCompanyProfile = (companyId: string) => {
-  //   getCompanyById(companyId);
-  //   setShowCompanyModal(true);
-  // };
-
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSending(true);

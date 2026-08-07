@@ -33,6 +33,8 @@ export const useAuthStore = create<AuthStore>()(
         set({ isLoading: true, error: null });
         try {
           const res = await api.post('/api/auth/sign-in/email', { email, password });
+          const token = res.data.token;
+          if(token) localStorage.setItem('auth_token',token);
 
           const userData: User = {
             id: res.data.user?.id || res.data.id,
