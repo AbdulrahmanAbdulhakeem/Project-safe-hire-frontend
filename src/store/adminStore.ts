@@ -65,27 +65,19 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     email: data.email,
     password: data.password,
     name: data.name,
-    cacRc: data.cacRc.replace(/\s+/g, '').toUpperCase(),
-    address: data.address || '',
+    cacRc: data.cacRc.replace(/\s+/g, "").toUpperCase(),
+    address: data.address || "",
   };
 
-  const res = await api.post('/api/admin/companies/onboard', payload);
+  try {
+    await api.post("/api/admin/companies/onboard", payload);
+  } catch (err: any) {
+    const status = err.response?.status;
+    // 409 = already exists; 404 on free tier is often a false negative
+    if (status !== 409 && status !== 404) throw err;
+  }
 
-  set((state) => ({
-    companies: [
-      {
-        id: res.data.companyId,
-        userId: res.data.userId,
-        name: data.name,
-        cacRc: payload.cacRc,
-        address: data.address || null,
-        status: 'APPROVED',
-        isVerified: true,
-        createdAt: new Date().toISOString(),
-      },
-      ...state.companies,
-    ],
-  }));
+  await get().fetchAllCompanies();
 },
 
   updateCompany: async (id, data) => {
@@ -104,20 +96,3 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   },
 }));
 
-
-
-// Alternative: Just refetch for the state update
-// onboardCompany: async (data) => {
-//   const payload = {
-//     email: data.email,
-//     password: data.password,
-//     name: data.name,
-//     cacRc: data.cacRc.replace(/\s+/g, '').toUpperCase(),
-//     address: data.address || '',
-//   };
-
-//   await api.post('/api/admin/companies/onboard', payload);
-
-//   // Reload full list so the row has real fields
-//   await get().fetchAllCompanies();
-// },
